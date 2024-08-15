@@ -1,0 +1,54 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "description": "페달 분류 모델 API",
+      "version": "1.0.0",
+      "title": "페달 분류 API"
+    },
+    "host": "localhost:5000",
+    "basePath": "/",
+    "schemes": ["http"],
+    "paths": {
+      "/start-pedal-model": {
+        "post": {
+          "summary": "페달 분류 모델 시작",
+          "description": "페달 분류 모델을 시작합니다.",
+          "responses": {
+            "200": {
+              "description": "성공적으로 모델을 시작했습니다.",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "example": "페달 분류 모델 실행 시작"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/stop-pedal-model": {
+        "post": {
+          "summary": "페달 분류 모델 중단",
+          "description": "페달 분류 모델을 중단합니다.",
+          "responses": {
+            "200": {
+              "description": "성공적으로 모델을 중단했습니다.",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "example": "페달 분류 모델 중단"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
