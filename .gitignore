@@ -1,0 +1,21 @@
+# .gitignore 예시
+
+# Python 관련
+__pycache__/
+*.pyc
+*.pyo
+
+# 가상환경
+venv/
+env/
+pedal/
+
+# IDE 설정
+.vscode/
+.idea/
+
+# 로그 파일
+*.log
+
+# 환경설정 파일
+*.env
