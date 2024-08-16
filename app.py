@@ -195,6 +195,7 @@ import torch
 import torch.nn as nn
 from collections import Counter
 from datetime import datetime  # 타임스탬프 추가
+import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
 
@@ -206,6 +207,33 @@ is_running = False  # 페달 모델이 실행 중인지 여부를 나타냄
 video_writer = None  # 영상 저장을 위한 VideoWriter 객체
 frame_count = 0  # 프레임 카운터
 predicted_labels = []  # 예측된 결과를 저장할 리스트
+
+# MQTT 설정
+mqtt_broker = "3.35.30.20"  # MQTT 브로커 주소 (예: 'localhost' 또는 실제 브로커 주소)
+mqtt_port = 1883  # MQTT 브로커 포트 (기본적으로 1883)
+mqtt_topic = "pedal/topic"  # 전송할 토픽 이름
+
+# MQTT 클라이언트 설정
+mqtt_client = mqtt.Client()
+
+# MQTT 브로커에 연결
+def connect_mqtt():
+    try:
+        mqtt_client.connect(mqtt_broker, mqtt_port)
+        print(f"Connected to MQTT Broker at {mqtt_broker}:{mqtt_port}")
+    except Exception as e:
+        print(f"Failed to connect to MQTT Broker: {e}")
+
+# MQTT로 메시지 전송 함수
+def send_mqtt_message(message):
+    try:
+        mqtt_client.publish(mqtt_topic, message)
+        print(f"Sent message to MQTT topic {mqtt_topic}: {message}")
+    except Exception as e:
+        print(f"Failed to send message via MQTT: {e}")
+
+# 연결 설정 (앱 시작 시 연결)
+connect_mqtt()
 
 # Swagger 설정
 SWAGGER_URL = '/swagger'  # Swagger UI 접근 경로
@@ -272,7 +300,6 @@ ip_webcam_url = "http://172.23.251.156:8080/video"
 def get_timestamp():
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# 페달 분류 모델 함수 (계속 실행)
 def run_pedal_classification():
     global is_running, video_writer, frame_count, predicted_labels
     cap = cv2.VideoCapture(ip_webcam_url)
@@ -283,7 +310,7 @@ def run_pedal_classification():
     frame_size = (width, height)
 
     # 영상 저장을 위한 VideoWriter 객체 생성 (코덱 확인 및 자동화)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 코덱 설정 (다른 코덱도 시도해볼 수 있음)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 코덱 설정
     output_video_path = f'output_video_{get_timestamp()}.avi'  # 타임스탬프를 이용한 파일명 생성
     fps = 30  # FPS 설정
     video_writer = cv2.VideoWriter(output_video_path, fourcc, fps, frame_size)
@@ -327,6 +354,10 @@ def run_pedal_classification():
             most_common_class_name = class_names[most_common_class[0]]
             print(f"가장 많이 나온 클래스: {most_common_class_name} (등장 횟수: {most_common_class[1]})")
 
+            # 1초 동안 결과가 'acc_push' 또는 'brake_push'일 경우 MQTT로 전송
+            if most_common_class_name in ['acc_push', 'brake_push']:
+                send_mqtt_message(most_common_class_name)  # MQTT 메시지 전송
+
             # 리스트 초기화
             predicted_labels = []
 
@@ -336,6 +367,7 @@ def run_pedal_classification():
     if video_writer is not None:
         video_writer.release()  # 비디오 파일 저장 완료
     print("페달 분류 모델 중단 및 영상 저장 완료")
+
 
 # 페달 분류 시작 API
 @app.route('/start-pedal-model', methods=['POST'])
