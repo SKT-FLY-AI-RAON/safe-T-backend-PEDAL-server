@@ -220,5 +220,5 @@ def index():
     return "페달 분류 API 서버가 실행 중입니다."
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=6001)
 
