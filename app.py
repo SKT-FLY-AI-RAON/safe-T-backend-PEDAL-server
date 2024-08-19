@@ -198,6 +198,7 @@ def start_pedal_model():
 
     if not is_running:
         is_running = True
+        send_mqtt_message("start")
         threading.Thread(target=run_pedal_classification).start()
         return jsonify({"status": "페달 분류 모델 실행 시작"}), 200
     else:
@@ -210,6 +211,7 @@ def stop_pedal_model():
 
     if is_running:
         is_running = False
+        send_mqtt_message("end")
         return jsonify({"status": "페달 분류 모델 중단"}), 200
     else:
         return jsonify({"status": "페달 분류 모델이 실행 중이 아님"}), 200
