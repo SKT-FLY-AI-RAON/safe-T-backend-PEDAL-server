@@ -18,6 +18,7 @@ import torch.nn as nn
 from collections import Counter
 from datetime import datetime  # 타임스탬프 추가
 import paho.mqtt.client as mqtt
+from gpt_test2 import gpt_interaction
 
 app = Flask(__name__)
 
@@ -124,6 +125,7 @@ def get_timestamp():
 
 def run_pedal_classification():
     global is_running, video_writer, frame_count, predicted_labels
+    brake_push_count = 0  # brake_push 카운터 추가
     cap = cv2.VideoCapture(ip_webcam_url)
 
     # 프레임 크기 자동 추출
@@ -176,9 +178,18 @@ def run_pedal_classification():
             most_common_class_name = class_names[most_common_class[0]]
             print(f"가장 많이 나온 클래스: {most_common_class_name} (등장 횟수: {most_common_class[1]})")
 
-            # 1초 동안 결과가 'acc_push' 또는 'brake_push'일 경우 MQTT로 전송
-            if most_common_class_name in ['acc_push', 'brake_push']:
-                send_mqtt_message(most_common_class_name)  # MQTT 메시지 전송
+            # brake_push가 3번 이상 나왔을 때 모델 중지 및 GPT 호출
+            if most_common_class_name == 'brake_push':
+                brake_push_count += 1
+                if brake_push_count >= 3:
+                    print("brake_push 3번 발생. 모델 중지 및 GPT 호출")
+                    is_running = False
+                    gpt_response = gpt_interaction("기아 K5")  # 차량 모델을 지정 (예: 기아 K5)
+                    print(f"GPT 응답: {gpt_response}")
+                    send_mqtt_message(gpt_response)
+                    break  # 모델 중지
+            else:
+                brake_push_count = 0
 
             # 리스트 초기화
             predicted_labels = []
@@ -189,6 +200,7 @@ def run_pedal_classification():
     if video_writer is not None:
         video_writer.release()  # 비디오 파일 저장 완료
     print("페달 분류 모델 중단 및 영상 저장 완료")
+
 
 
 # 페달 분류 시작 API
