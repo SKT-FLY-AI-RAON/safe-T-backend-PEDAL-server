@@ -5,7 +5,7 @@
       "version": "1.0.0",
       "title": "페달 분류 API"
     },
-    "host": "localhost:6001",
+    "host": "127.0.0.1:6001",
     "basePath": "/",
     "schemes": ["http"],
     "paths": {
