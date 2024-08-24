@@ -19,6 +19,7 @@ from collections import Counter
 from datetime import datetime  # 타임스탬프 추가
 import paho.mqtt.client as mqtt
 from gpt_test2 import gpt_interaction
+import requests
 
 app = Flask(__name__)
 
@@ -117,7 +118,7 @@ class_names = ['acc_push', 'brake_push', 'acc', 'brake']
 class_dict = {class_name: i for i, class_name in enumerate(class_names)}  # 클래스에 숫자 매기기
 
 # IP Webcam URL (IP 주소를 확인 후 사용)
-ip_webcam_url = "http://172.23.251.156:8080/video"
+ip_webcam_url = "http://192.168.219.60:8080/video"
 
 # 타임스탬프 형식 설정
 def get_timestamp():
@@ -178,6 +179,10 @@ def run_pedal_classification():
             most_common_class_name = class_names[most_common_class[0]]
             print(f"가장 많이 나온 클래스: {most_common_class_name} (등장 횟수: {most_common_class[1]})")
 
+            # 1초 동안 결과가 'acc_push' 또는 'brake_push'일 경우 MQTT로 전송
+            if most_common_class_name in ['acc_push', 'brake_push']:
+                send_mqtt_message(most_common_class_name)  # MQTT 메시지 전송
+
             # brake_push가 3번 이상 나왔을 때 모델 중지 및 GPT 호출
             if most_common_class_name == 'brake_push':
                 brake_push_count += 1
@@ -234,5 +239,5 @@ def index():
     return "페달 분류 API 서버가 실행 중입니다."
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6001)
+    app.run(host='127.0.0.1', port=6001)
 
